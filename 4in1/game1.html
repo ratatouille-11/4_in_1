@@ -1,0 +1,547 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Hangman — Mini Project</title>
+
+<style>
+  :root{
+    --bg: #0f1724;
+    --card: #0b1220;
+    --accent: #60a5fa;
+    --muted: #9ca3af;
+    --win: #16a34a;
+    --danger: #ef4444;
+  }
+    *{
+        box-sizing:border-box;
+        font-family:Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+    body{
+        margin:0;
+        background:linear-gradient(180deg,#09203F 0%, #537895 100%);
+        color:#e6eef8;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        height:100vh;
+        padding:20px;
+        overflow:hidden;
+    }
+    a.header-link{
+        color:var(--accent);
+        text-decoration:none;
+        border:1px solid rgba(255,255,255,0.04);   
+        padding:6px 10px;
+        border-radius:8px
+    }
+    .card{
+        width:min(850px,150vw);
+        background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+        border-radius:12px;
+        padding:18px;
+        box-shadow:0 6px 24px rgba(2,6,23,0.6);
+        border:1px solid rgba(255,255,255,0.03)}
+    header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between; /* keep resetBtn on right */
+      margin-bottom:12px;
+      position: relative;
+    }
+
+    header h1{
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size:20px;
+      margin:0;
+    }
+
+
+    h1{
+        font-size:20px;
+        margin:0
+    }
+        
+    .controls{
+        display:flex;
+        gap:8px;
+        align-items:center
+    }
+    button, select{
+        background:transparent;
+        border:1px solid rgba(255,255,255);
+        color:inherit;
+        padding:8px 10px;
+        border-radius:8px;
+        cursor:pointer
+    }
+    .main{
+        display:flex;
+        gap:18px;
+        align-items:flex-start
+    }
+    .home-btn{
+      z-index: 9999; 
+      position: absolute; /* remove absolute positioning */
+      padding:6px 14px;
+      font-size:14px;
+      border-radius:999px;
+      background:transparent;
+      border:1px solid rgba(255,255,255);
+      color:inherit;
+      text-decoration:none;
+      transition:.2s;
+    }
+  /* gallows */
+    .gallows{
+        width: 300px;
+        height:300px;
+        border-radius:8px;
+        background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        position:relative;
+        border:1px solid rgba(255,255,255,0.02);
+        padding:14px
+    }
+    .word-area{
+        flex:1;
+        display:flex;
+        flex-direction:column;
+        gap:12px
+    }
+    .word{
+        font-size:36px;
+        letter-spacing:8px;
+        text-align:center
+    }
+    .letters{
+        display:flex;
+        flex-wrap:wrap;
+        gap:8px;
+        padding:8px;
+        background:transparent;
+        border-radius:8px
+    }
+    .letter{
+        min-width:44px;
+        padding:10px;
+        border-radius:8px;
+        border:1px solid rgba(255,255,255,0.04);
+        background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.002));
+        cursor:pointer
+    }
+    .letter:disabled{
+        opacity:.4;
+        cursor:default
+    }
+
+    #wordDisplay {
+        font-size: 28px;
+        letter-spacing: 4px;
+        text-align: center;
+        overflow-x: auto;  /* if a word is really long */
+    }
+
+    .meta{
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        margin-top:12px
+    }
+
+    .pill{
+        background:rgba(255, 255, 255, 0.02);
+        border:1px solid rgba(255,255,255);
+
+        padding:6px 10px;
+        border-radius:999px;
+        font-weight:600
+    }
+    .message{
+        margin-top:8px;
+        padding:10px;
+        border-radius:8px;
+        display:none
+    }
+    .message.win{
+        background:#05260f;color:#a7f3d0
+    }
+    .message.lose{
+        background:#2b0a0a;color:#ffc9c9
+    }
+    .hint-box{
+        background:rgba(96,165,250,0.06);
+        padding:8px;
+        border-radius:8px;
+        border:1px solid rgba(96,165,250,0.08);
+        color:var(--accent);
+        font-weight:600
+    }
+    footer{
+        margin-top:14px;
+        font-size:13px;
+        color:var(--muted)
+    }
+  /* confetti canvas sits above card */
+    #confetti{
+        position:fixed;
+        top:0;
+        left:0;
+        width:100%;
+        height:100%;
+        pointer-events:none;
+        z-index:999
+    }
+    @media (max-width:720px){
+        .main{
+            flex-direction:column;
+            align-items:center
+        }
+        .gallows{width:220px;
+            height:220px
+        }
+        .word{
+            font-size:28px
+        }
+        .letter{
+            min-width:36px;
+            padding:8px
+        }
+    }
+</style>
+</head>
+<body>
+    <canvas id="confetti"></canvas>
+    <div class="card" role="application" aria-label="Hangman game">
+    <header>
+    <div class="header-left">
+        <a href="4in1.html" class="home-btn">🏠 Home</a>
+    </div>
+    <h1>Hangman</h1>
+    <div class="controls">
+        <button id="resetBtn">New Word</button>
+    </div>
+</header>
+
+    <div class="main">
+        <div class="gallows" aria-hidden="true">
+<!-- SVG gallows and dynamic parts (parts reveal on wrong guess) -->
+            <svg id="gallowSvg" width="500" height="2000"viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <line x1="10" y1="150" x2="150" y2="150" stroke="#333" stroke-width="3" stroke-linecap="round"/>
+                <line x1="40" y1="150" x2="40" y2="10" stroke="#333" stroke-width="3" stroke-linecap="round"/>
+                <line x1="40" y1="10" x2="110" y2="10" stroke="#333" stroke-width="3" stroke-linecap="round"/>
+                <line x1="110" y1="10" x2="110" y2="30" stroke="#333" stroke-width="3" stroke-linecap="round"/>
+                <g id="parts" stroke="var(--accent)" stroke-linecap="round" stroke-width="3" fill="none">
+                    <circle id="head" cx="110" cy="40" r="10" style="display:none"/>
+                    <line id="body" x1="110" y1="50" x2="110" y2="90" style="display:none"/>
+                    <line id="armL" x1="110" y1="60" x2="95" y2="75" style="display:none"/>
+                    <line id="armR" x1="110" y1="60" x2="125" y2="75" style="display:none"/>
+                    <line id="legL" x1="110" y1="90" x2="95" y2="110" style="display:none"/>
+                    <line id="legR" x1="110" y1="90" x2="125" y2="110" style="display:none"/>
+                </g>
+            </svg>
+        </div>
+
+        <div class="word-area">
+            <div class="word" id="word" aria-live="polite">_ _ _ _ _</div>
+            <br>
+            <div class="letters" id="letters" aria-label="Letter choices" role="group"></div>
+            <div class="meta">
+                <div class="pill">Guesses left: <strong id="guesses">6</strong></div>
+                <div class="pill">Hint available: <strong id="hintCount">1</strong></div>
+                
+            </div>
+        <br>
+        <div class="scores">
+        <div class="score-pill">Wins: <span id="wins">0</span></div>
+        <div class="score-pill">Losses: <span id="losses">0</span></div>
+    </div>
+
+        <div id="message" class="message" role="status" aria-live="polite"></div>
+        <div id="hintBox" class="hint-box" style="display:none"></div>
+      </div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  // Word list with hints 
+  const WORDS = [
+    {word:'ELECTRICITY', hint:'A form of energy resulting from charged particles.'},
+    {word:'DONKEY', hint:'A domesticated hoofed mammal related to the horse.'},
+    {word:'HARDWARE', hint:'The physical parts of a computer system.'},
+    {word:'XEROX', hint:'A company name often used to mean photocopy.'},
+    {word:'TRANSISTOR', hint:'A semiconductor device used to amplify or switch signals.'},
+    {word:'COMPUTER', hint:'An electronic device for storing and processing data.'},
+    {word:'DESKTOP', hint:'A personal computer intended for regular use at one location.'},
+    {word:'ENGINEERING', hint:'Application of science and math to solve problems.'},
+    {word:'HANGMAN', hint:'The classic word-guessing game with a gallows.'},
+    {word:'CIRCUIT', hint:'A closed path through which electric current flows.'},
+    {word:'IMAGINATION', hint:'The ability to form new ideas or mental images.'},
+    {word:'ROBOT', hint:'A machine capable of carrying out complex tasks automatically.'},
+    {word:'MEMORY', hint:'The part of a computer that stores data.'},
+    {word:'POWER', hint:'The rate of doing work or transferring energy.'},
+    {word:'SUBMARINE', hint:'A watercraft capable of operating underwater.'},
+    {word:'CHESS', hint:'A strategic board game played on a checkered board.'},
+    {word:'RESISTANCE', hint:'Opposition to the flow of electric current.'},
+    {word:'MATRIX', hint:'A rectangular array of numbers or elements.'},
+    {word:'FUNCTION', hint:'A relation between inputs and outputs in mathematics.'},
+    {word:'LASER', hint:'Device that emits light through optical amplification.'},
+    {word:'MECHANISM', hint:'A system of parts working together in a machine.'},
+    {word:'BODYGUARD', hint:'A person employed to protect someone.'},
+    {word:'TITANIC', hint:'A famous ship that sank in 1912.'},
+    {word:'GLOBAL', hint:'Relating to the whole world.'},
+    {word:'OZONE', hint:'A molecule made of three oxygen atoms protecting Earth.'},
+    {word:'BRIDGE', hint:'A structure built to span an obstacle.'},
+    {word:'TECHNOLOGY', hint:'The application of scientific knowledge for practical use.'},
+    {word:'SPIDER', hint:'An arachnid with eight legs.'},
+    {word:'PYRAMID', hint:'A monumental structure with a square base and triangular sides.'},
+    {word:'SPHERE', hint:'A perfectly round 3D object.'},
+    {word:'MEMBER', hint:'An individual belonging to a group.'},
+    {word:'WARNING', hint:'A statement or event that indicates danger.'},
+    {word:'YOURSELF', hint:'Refers to the person being addressed.'},
+    {word:'SCREEN', hint:'A flat panel used for display.'},
+    {word:'LANGUAGE', hint:'A system of communication using words or symbols.'},
+    {word:'SYSTEM', hint:'A set of connected things forming a complex whole.'},
+    {word:'INTERNET', hint:'A global network connecting computers.'},
+    {word:'PARAMETER', hint:'A quantity that defines a system or sets conditions.'},
+    {word:'TRAFFIC', hint:'Movement of vehicles or data flow on a network.'},
+    {word:'NETWORK', hint:'A group of interconnected devices.'},
+    {word:'FILTER', hint:'A device used to remove impurities or unwanted parts.'},
+    {word:'NUCLEUS', hint:'The central part of an atom or a cell.'},
+    {word:'AUTOMATIC', hint:'Working by itself with little human control.'},
+    {word:'MICROPHONE', hint:'A device that converts sound into electrical signals.'},
+    {word:'CASSETTE', hint:'A small plastic case containing magnetic tape.'},
+    {word:'OPERATION', hint:'A process or series of acts.'},
+    {word:'COUNTRY', hint:'A nation with its own government.'},
+    {word:'BEAUTIFUL', hint:'Pleasing the senses or mind aesthetically.'},
+    {word:'MUSICIAN', hint:'A person skilled in playing music.'},
+    {word:'PICTURE', hint:'A visual representation of something.'},
+    {word:'TEACHER', hint:'A person who educates students.'},
+    {word:'SUPERMAN', hint:'A famous comic superhero.'},
+    {word:'UNDERTAKER', hint:'A person whose business is preparing the dead for burial.'},
+    {word:'ALARM', hint:'A signal or device to alert danger or time.'},
+    {word:'PROCESS', hint:'A series of steps taken to achieve a result.'},
+    {word:'KEYBOARD', hint:'Input device with keys for typing.'},
+    {word:'ELECTRON', hint:'A negatively charged subatomic particle.'},
+    {word:'CERTIFICATE', hint:'An official document attesting to a fact.'},
+    {word:'GRANDFATHER', hint:'Father of one’s father or mother.'},
+    {word:'LANDMARK', hint:'An important or historical feature.'},
+    {word:'RELATIVITY', hint:'Einstein’s theory of physics.'},
+    {word:'ERASER', hint:'A tool used to remove pencil marks.'},
+    {word:'DESIGN', hint:'A plan or drawing produced to show an object.'},
+    {word:'FOOTBALL', hint:'A team sport played with a ball on a field.'},
+    {word:'HUMAN', hint:'A member of the species Homo sapiens.'},
+    {word:'EGYPTIAN', hint:'Relating to Egypt.'},
+    {word:'ELEPHANT', hint:'A very large mammal with a trunk.'},
+    {word:'QUEEN', hint:'A female monarch.'}
+  ];
+
+  const MAX_GUESSES = 6;
+  const parts = Array.from(document.querySelectorAll('#parts > *'));
+  const lettersEl = document.getElementById('letters');
+  const wordEl = document.getElementById('word');
+  const guessesEl = document.getElementById('guesses');
+  const messageEl = document.getElementById('message');
+  const hintCountEl = document.getElementById('hintCount');
+  const hintBox = document.getElementById('hintBox');
+  const resetBtn = document.getElementById('resetBtn');
+  const confettiCanvas = document.getElementById('confetti');
+  const ctx = confettiCanvas.getContext('2d');
+  const winsEl = document.getElementById('wins');
+  const lossesEl = document.getElementById('losses');
+
+  // Load counters from localStorage (persist between reloads)
+  let wins = Number(localStorage.getItem('hangman_wins') || 0);
+  let losses = Number(localStorage.getItem('hangman_losses') || 0);
+
+  let wordObj = null;
+  let revealed = [];
+  let guessesLeft = MAX_GUESSES;
+  let usedHint = false;
+  let confettiAnimId = null;
+  let confettiPieces = [];
+
+  function pickWord(){
+    return WORDS[Math.floor(Math.random()*WORDS.length)];
+  }
+
+  function updateScoreUI(){
+    winsEl.textContent = wins;
+    lossesEl.textContent = losses;
+  }
+
+  function start(){
+    // stop any confetti running
+    stopConfetti();
+
+    wordObj = pickWord();
+    revealed = Array.from(wordObj.word).map(ch => ch === ' ' ? ' ' : '_');
+    guessesLeft = MAX_GUESSES;
+    usedHint = false;
+    hintBox.style.display = 'none';
+    hintBox.textContent = '';
+    messageEl.style.display = 'none';
+    hintCountEl.textContent = 1;
+    parts.forEach(p => p.style.display = 'none');
+    buildKeyboard();
+    updateUI();
+    updateScoreUI(); // show current counts (do NOT reset the counters here)
+  }
+
+  function updateUI(){
+    wordEl.textContent = revealed.join(' ');
+    guessesEl.textContent = guessesLeft;
+    if (guessesLeft === 1 && !usedHint) showHint();
+  }
+
+  function buildKeyboard(){
+    lettersEl.innerHTML = '';
+    const A = 'A'.charCodeAt(0);
+    for (let i=0;i<26;i++){
+      const ch = String.fromCharCode(A+i);
+      const btn = document.createElement('button');
+      btn.className = 'letter';
+      btn.textContent = ch;
+      btn.setAttribute('aria-label', 'Letter ' + ch);
+      btn.addEventListener('click', () => onLetter(ch, btn));
+      lettersEl.appendChild(btn);
+    }
+  }
+
+  function onLetter(ch, btn){
+    if (guessesLeft <= 0) return;
+    btn.disabled = true;
+    const idxs = [];
+    for (let i=0;i<wordObj.word.length;i++){
+      if (wordObj.word[i] === ch) idxs.push(i);
+    }
+    if (idxs.length){
+      idxs.forEach(i => revealed[i] = ch);
+      updateUI();
+      checkWin();
+    } else {
+      guessesLeft--;
+      updateUI();
+      revealPart(MAX_GUESSES - guessesLeft - 1);
+      if (guessesLeft <= 0) endGame(false);
+    }
+  }
+
+  function revealPart(step){
+    if (step >= 0 && step < parts.length) parts[step].style.display = 'block';
+  }
+
+  function showHint(){
+    usedHint = true;
+    hintCountEl.textContent = 0;
+    hintBox.style.display = 'block';
+    hintBox.textContent = '💡 Hint: ' + wordObj.hint;
+  }
+
+  function checkWin(){
+    if (revealed.join('') === wordObj.word){
+      endGame(true);
+    }
+  }
+
+  function endGame(win){
+    // disable keyboard
+    lettersEl.querySelectorAll('button').forEach(b => b.disabled = true);
+    messageEl.style.display = 'block';
+
+    if (win){
+      messageEl.className = 'message win';
+      messageEl.textContent = '🎉 You Win! The word was: ' + wordObj.word + '!';
+      // increment wins and persist
+      wins++;
+      localStorage.setItem('hangman_wins', String(wins));
+      updateScoreUI();
+      launchConfetti();
+    } else {
+      // reveal full word
+      revealed = Array.from(wordObj.word);
+      updateUI();
+      messageEl.className = 'message lose';
+      messageEl.textContent = '😢 You lost — the word was: ' + wordObj.word + '.';
+      // increment losses and persist
+      losses++;
+      localStorage.setItem('hangman_losses', String(losses));
+      updateScoreUI();
+    }
+  }
+
+  // Confetti functions
+  function launchConfetti(){
+    confettiCanvas.width = window.innerWidth;
+    confettiCanvas.height = window.innerHeight;
+    confettiPieces = Array.from({length:140}).map(()=>({
+      x: Math.random()*confettiCanvas.width,
+      y: Math.random()*-confettiCanvas.height,
+      w: 8 + Math.random()*8,
+      h: 6 + Math.random()*8,
+      color: `hsl(${Math.random()*360}, 90%, 60%)`,
+      speed: 2 + Math.random()*4,
+      rot: Math.random()*360,
+      rotSpeed: (Math.random()-0.5)*0.2
+    }));
+
+    function draw(){
+      ctx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height);
+      confettiPieces.forEach(p=>{
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rot);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+        ctx.restore();
+        p.y += p.speed;
+        p.rot += p.rotSpeed;
+        if (p.y > confettiCanvas.height + 10) {
+          p.y = -20 - Math.random()*confettiCanvas.height;
+          p.x = Math.random()*confettiCanvas.width;
+        }
+      });
+      confettiAnimId = requestAnimationFrame(draw);
+    }
+    draw();
+  }
+
+  function stopConfetti(){
+    if (confettiAnimId) cancelAnimationFrame(confettiAnimId);
+    confettiAnimId = null;
+    if (ctx) ctx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height);
+  }
+
+  // New Word stops confetti and starts a fresh round (does NOT reset counters)
+  resetBtn.addEventListener('click', () => {
+    stopConfetti();
+    start();
+  });
+
+  // keyboard support
+  window.addEventListener('keydown', (e) => {
+    const k = e.key.toUpperCase();
+    if (k.length === 1 && k >= 'A' && k <= 'Z') {
+      const btn = Array.from(lettersEl.querySelectorAll('button')).find(b => b.textContent === k && !b.disabled);
+      if (btn) btn.click();
+    }
+    if (e.key === 'r' || e.key === 'R') {
+      stopConfetti();
+      start();
+    }
+  });
+
+  // initialize
+  updateScoreUI();
+  start();
+})();
+</script>
+
+</body>
+</html>

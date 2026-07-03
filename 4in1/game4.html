@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Memory Card Game — Mini Project</title>
+
+<style>
+    :root{
+        --bg: #0f1724;
+        --card: #0b1220;
+        --accent: #ffffff;
+        --muted: #9ca3af;
+        --win: #16a34a;
+        --lose: #dc2626;
+    }
+    *{
+        box-sizing:border-box;
+        font-family:Inter, ui-sans-serif, system-ui, -apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;
+    }
+    body{
+        margin:0;
+        background:linear-gradient(180deg,#09203F 0%, #537895 100%);
+        color:#e6eef8;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        height:100vh;
+        padding:20px;
+    }
+    .card{
+        width:min(700px,95vw);
+        min-height:520px;
+        background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));
+        border-radius:16px;
+        padding:20px;
+        box-shadow:0 6px 24px rgba(2,6,23,0.6);
+        border:1px solid rgba(255,255,255,0.05);
+        position:relative;
+        text-align:center
+    }
+    header{
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        margin-bottom:12px
+    }
+    h1{
+        font-size:26px;
+        margin:0;
+        background:linear-gradient(to right,var(--accent),#ffffff);
+        -webkit-background-clip:text;
+        -webkit-text-fill-color:transparent
+    }
+    .home-btn{
+        position:absolute;
+        top:12px;
+        left:12px;
+        padding:6px 14px;
+        font-size:14px;
+        border-radius:999px;
+        border: 1px solid rgba(255,255,255);
+        background:transparent;
+        color:#fff;
+        text-decoration:none;
+        transition:.2s
+    }
+    button{
+        background:transparent;
+        border:1px solid rgba(255,255,255);
+        color:inherit;
+        padding:8px 14px;
+        border-radius:8px;
+        cursor:pointer;
+        margin-left:8px
+    }
+    button:hover{
+        background:rgba(255,255,255,0.08)
+    }
+    .board{
+        display:grid;
+        grid-template-columns:repeat(4,1fr);
+        gap:10px;
+        padding:12px;
+        background:linear-gradient(180deg,rgba(255,255,255,0.005),rgba(255,255,255,0.002));
+        border-radius:12px;
+        margin-top:16px
+    }
+    .cell{
+        aspect-ratio:1/1;
+        position:relative;
+        cursor:pointer;
+        perspective:1000px
+    }
+    .inner{
+        position:absolute;
+        inset:0;
+        transition:transform 0.6s;
+        transform-style:preserve-3d
+    }
+    .flipped .inner{
+        transform:rotateY(180deg)
+    }
+    .front,.back{
+        position:absolute;
+        inset:0;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        border-radius:10px;
+        font-size:40px;
+        font-weight:bold;
+        backface-visibility:hidden
+    }
+    .front{
+        background:#0d1525;
+        font-size:42px
+    }
+    .back{
+        background:#1e293b;
+        transform:rotateY(180deg);
+        font-size:50px
+    }
+    .meta{
+        display:flex;
+        justify-content:space-around;
+        align-items:center;
+        margin-top:20px;
+        flex-wrap:wrap
+    }
+
+   .status{
+        color:var(--muted);
+        font-size:18px;
+        font-weight:bold;
+        text-align:center;
+        width:100%;
+        margin-bottom:12px
+    }
+    .score-pill{
+        background:rgba(255,255,255,0.05);
+        padding:8px 14px;
+        border-radius:999px;
+        font-weight:600;
+        margin:4px
+        }
+</style>
+</head>
+<body>
+  <div class="card" role="application" aria-label="Memory card game">
+    <a href="4in1.html" class="home-btn">🏠 Home</a>
+    <header>
+      <h1> Memory Game</h1>
+      <div>
+              <button id="restart">Restart</button>
+    </div>
+            </header>
+
+    <div id="board" class="board"></div>
+
+    <div class="meta">
+      <div class="status" id="status">Find all the pairs!</div>
+      <div class="score-pill">Moves: <span id="moves">0</span> / 20</div>
+      <div class="score-pill">Wins: <span id="wins">0</span></div>
+      <div class="score-pill">Losses: <span id="losses">0</span></div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  const boardEl = document.getElementById('board');
+  const restartBtn = document.getElementById('restart');
+  const statusEl = document.getElementById('status');
+  const movesEl = document.getElementById('moves');
+  const winsEl = document.getElementById('wins');
+  const lossesEl = document.getElementById('losses');
+
+  const icons = ["🍎","🍌","🍇","🍓","🍍","🥝","🍉","🍒"];
+  let cards = [];
+  let flipped = [];
+  let lock = false;
+  let moves = 0;
+  let matchedPairs = 0;
+  let wins = 0;
+  let losses = 0;
+  const maxMoves = 20;
+  const totalPairs = icons.length;
+
+  function initGame() {
+    cards = shuffle([...icons, ...icons]); // duplicate icons
+    boardEl.innerHTML = '';
+    flipped = [];
+    lock = false;
+    moves = 0;
+    matchedPairs = 0;
+    movesEl.textContent = moves;
+    statusEl.textContent = `Find all the pairs! (Limit: ${maxMoves} moves)`;
+
+    cards.forEach((icon, i) => {
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.dataset.icon = icon;
+      cell.innerHTML = `
+        <div class="inner">
+          <div class="front">❓</div>
+          <div class="back" style="font-size:40px">${icon}</div>
+        </div>`;
+      cell.addEventListener('click', () => flipCard(cell));
+      boardEl.appendChild(cell);
+    });
+  }
+
+  function flipCard(cell) {
+    if (lock || cell.classList.contains('flipped')) return;
+
+    cell.classList.add('flipped');
+    flipped.push(cell);
+
+    if (flipped.length === 2) {
+      moves++;
+      movesEl.textContent = moves;
+      checkMatch();
+    }
+  }
+
+  function checkMatch() {
+    const [c1, c2] = flipped;
+    if (c1.dataset.icon === c2.dataset.icon) {
+      matchedPairs++;
+      flipped = [];
+      if (matchedPairs === totalPairs) {
+        statusEl.textContent = `🎉 You won in ${moves} moves!`;
+        wins++;
+        winsEl.textContent = wins;
+        lock = true;
+      }
+    } else {
+      lock = true;
+      setTimeout(() => {
+        c1.classList.remove('flipped');
+        c2.classList.remove('flipped');
+        flipped = [];
+        lock = false;
+      }, 800);
+    }
+
+    // check for move limit lose condition
+    if (moves >= maxMoves && matchedPairs < totalPairs) {
+      statusEl.textContent = `❌ You lost! Reached ${maxMoves} moves.`;
+      losses++;
+      lossesEl.textContent = losses;
+      lock = true;
+    }
+  }
+
+  function shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  restartBtn.addEventListener('click', initGame);
+
+  // start first game
+  initGame();
+})();
+
+ 
+</script>
+</body>
+</html>

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>4 in 1 Games</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0f1724;
+      color: #fff;
+      text-align: center;
+      padding: 20px;
+      background:linear-gradient(180deg,#09203F 0%, #537895 100%);
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 75px;
+      color: rgb(255, 255, 255);
+      text-shadow: 0 0 15px #38bdf8, 0 0 25px #38bdf8;
+      padding: 10px;
+      border-radius: 15px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      grid-gap: 15px;
+    }
+
+    .game {
+    display: block;              
+    text-decoration: none;       
+    color: inherit;              
+    background: #ffffff;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+    transition: transform 0.3s ease;
+    }
+
+    .game:hover {
+      transform: scale(1.03);
+    }
+
+    .game img {
+      width: 60%;
+      height: 45%;
+      object-fit: cover;
+      cursor: pointer;
+    }
+
+    .description {
+      padding: 50px;
+      text-align: left;
+    }
+
+    .description h2 {
+      margin: 0 0 10px;
+      font-size: 30px;
+      color: #000000;
+    }
+
+    .description p {
+      margin: 0;
+      color: #000;
+      font-size: 15px;
+      line-height: 1.4;
+    }
+
+    footer {
+      margin-top: 40px;
+      padding: 20px;
+      background: #1e293b;
+      color: #fff;
+      text-align: center;
+      border-radius: 10px;
+      font-size: 18px;
+      box-shadow: 0 -3px 10px rgba(0,0,0,0.3);
+    }
+
+    footer p {
+      margin: 5px 0;
+    }
+
+
+    @media (max-width: 768px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+      .game img {
+        height: 500px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>4 in 1 Games</h1>
+
+  <div class="grid">
+  <a href="game1.html" class="game">
+    <img src="hangman1.png" alt="Hangman">
+    <div class="description">
+      <h2>Hangman</h2><br>
+      <p>Guess the hidden word one letter at a time. Be careful — too many wrong guesses and the stickman meets his fate!</p>
+    </div>
+  </a>
+
+  <a href="game2.html" class="game">
+    <img src="tic_tac_toe.png" alt="Tic Tac Toe">
+    <div class="description">
+      <h2>Tic Tac Toe</h2><br>
+      <p>Classic two-player strategy game. Place your Xs and Os in a row, column, or diagonal to win!</p>
+    </div>
+  </a>
+
+  <a href="game3.html" class="game">
+    <img src="guessnumber.png" alt="Guess the Number">
+    <div class="description">
+      <h2>Guess the Number</h2><br>
+      <p>Try to guess the secret number in the fewest attempts possible. Each guess gives you a clue — higher or lower.</p>
+    </div>
+  </a>
+
+  <a href="game4.html" class="game">
+    <img src="memorycard.png" alt="Memory Card Game">
+    <div class="description">
+      <h2>Memory<br>Card</h2><br>
+      <p>Flip the cards and match the pairs. Test your memory skills and challenge yourself to clear the board faster!</p>
+    </div>
+  </a>
+</div>
+
+</body>
+<footer>
+  <footer>
+  <p>Made with ❤️ by:</p>
+  <p>Romana Zehra</p>
+  <p>Assisted By</p>
+  <p>Samra Khan • Saba Parween</p>
+</footer>
+
+</footer>
+</html>
